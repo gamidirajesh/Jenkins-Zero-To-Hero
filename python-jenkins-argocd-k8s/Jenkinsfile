@@ -1,6 +1,31 @@
 pipeline {
     
-    agent any 
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: jnlp
+    image: jenkins/inbound-agent:latest
+  - name: docker
+    image: docker:24.0.7-dind
+    securityContext:
+      privileged: true
+    env:
+      - name: DOCKER_TLS_CERTDIR
+        value: ""
+    volumeMounts:
+      - name: docker-graph-storage
+        mountPath: /var/lib/docker
+  volumes:
+    - name: docker-graph-storage
+      emptyDir: {}
+"""
+            defaultContainer 'docker'
+        }
+    } 
     
     environment {
         IMAGE_TAG = "${BUILD_NUMBER}"
